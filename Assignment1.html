@@ -1,0 +1,77 @@
+﻿<!--
+FileName:       Assignment1.html
+Programmer:     Anmol Singh
+Date:           07/28/2024
+Purpose:        This file contains the HTML code necessary to run the WebGL 2D Game.
+                I have made an attempt to separate the parts of the program using the 
+                Model-View-Controller design pattern. The model.js, view.js, and controller.js 
+                files define the code for those components respectively. I have also tried
+                to introduce the gl-matrix library and also defined the vertex and fragment shader 
+                code in this file.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Triangle Collection Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; }  /* Body margin is set to zero and will prevent overflow scrolling */
+        canvas { display: block; position: absolute; top: 0; left: 0; } /* Canvas elements fill the entire screen and stack on top of each other */
+        #timerCanvas { pointer-events: none; } /* Pointer events are disabled on the timer canvas so it doesn't interfere with the game */
+    </style>
+</head>
+<body>
+    <canvas id="glCanvas" width="800" height="700"></canvas>  <!-- Canvas is set for rendering the game -->
+    <canvas id="timerCanvas" width="800" height="700"></canvas>  <!-- Canvas is set for displaying the timer -->
+    <!-- Linking the external JavaScript libraries and modules for the MVC components -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+    <script src="model.js"></script>
+    <script src="view.js"></script>
+    <script src="controller.js"></script>
+    <script>
+    /* The function starts here for setting up the WebGL context, creating the MVC components and starting the game */ 
+        window.onload = function() {
+            const glCanvas = document.getElementById("glCanvas");    // Canvas elements are defined
+            const timerCanvas = document.getElementById("timerCanvas");
+            glCanvas.width = window.innerWidth;     // Canvas sizes are set to match the window dimensions
+            glCanvas.height = window.innerHeight;
+            timerCanvas.width = window.innerWidth;
+            timerCanvas.height = window.innerHeight;
+            
+            const gl = glCanvas.getContext("webgl2");  // The WebGL context starts here for the 3D rendering and 2D context for the timer
+            const ctx = timerCanvas.getContext('2d'); // 2D context for the timer
+
+            if (!gl) {
+                alert("Unable to initialize WebGL. Your browser or machine may not support it.");
+                return;
+            }                                        // Check for WebGL if it is available or not and working
+            // Vertex shader program starts from here
+            const vsSource = `                       
+                attribute vec4 aVertexPosition;
+                uniform vec4 uVertexColor;
+                uniform mat4 uModelViewMatrix;
+                uniform mat4 uProjectionMatrix;
+                varying lowp vec4 vColor;
+                void main(void) {
+                    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+                    vColor = uVertexColor;
+                }
+            `;
+             // Fragment shader program starts from here
+            const fsSource = `
+                varying lowp vec4 vColor;
+                void main(void) {
+                    gl_FragColor = vColor;
+                }
+            `;
+            // Initialize the MVC components
+            const model = new Model();
+            const view = new View(model, glCanvas, ctx, vsSource, fsSource);
+            const controller = new Controller(model, view);
+            // Start the game
+            controller.startGame(); 
+        }
+    </script>
+</body>
+</html>
